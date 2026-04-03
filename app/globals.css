@@ -185,6 +185,30 @@
   background: oklch(1 0 0 / 25%);
 }
 
+/* ── Global input height — easier touch targets ────────────────────────── */
+/* Base h-9 is 36px; bump to h-11 (44px) which meets WCAG 2.5.5 minimum   */
+input[data-slot="input"] {
+  height: 2.75rem; /* 44px — overridable via className h-* */
+  border-radius: var(--radius-control);
+  padding-left: 0.875rem;
+  padding-right: 0.875rem;
+}
+
+/* ── Focus rings — visible for keyboard/screen-reader users ──────────── */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* ── No-scrollbar utility — used for horizontal filter strips ─────────── */
+.no-scrollbar {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* IE / Edge */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari */
+}
+
 /* Muscle activation colors used in SVG body map */
 .muscle-fresh { fill: oklch(0.22 0.015 264); }
 .muscle-light { fill: oklch(0.55 0.18 145 / 60%); }

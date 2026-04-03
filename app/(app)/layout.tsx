@@ -5,7 +5,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
+      {/* pb accounts for BottomNav (56px) + safe-area on mobile */}
+      <main className="flex-1 min-w-0 pb-[calc(64px+env(safe-area-inset-bottom,0px))] lg:pb-0">
         {children}
       </main>
       <BottomNav />

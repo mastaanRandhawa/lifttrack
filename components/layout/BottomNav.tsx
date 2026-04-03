@@ -23,22 +23,53 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/95 backdrop-blur-sm border-t border-border safe-area-inset-bottom">
-      <div className="flex items-center justify-around px-2 py-2 pb-[env(safe-area-inset-bottom,8px)]">
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-sidebar/98 backdrop-blur-md border-t border-border"
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      aria-label="Main navigation"
+    >
+      <div className="flex items-stretch justify-around px-1 pt-1 pb-2">
         {navItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive =
+            pathname === item.href || pathname.startsWith(item.href + "/");
+
           return (
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
+              aria-label={item.label}
+              /* Minimum 56px tap target height (Fitts's Law) */
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150",
-                isActive ? "text-primary" : "text-muted-foreground"
+                "relative flex flex-col items-center justify-center gap-1 flex-1 min-h-[56px] rounded-xl transition-all duration-150 select-none",
+                isActive
+                  ? "text-primary"
+                  : "text-muted-foreground active:text-foreground"
               )}
             >
-              <Icon className={cn("w-5 h-5", isActive && "text-primary")} />
-              <span>{item.label}</span>
+              {/* Active background pill */}
+              {isActive && (
+                <span
+                  className="absolute top-1 inset-x-3 h-[30px] rounded-full bg-primary/12"
+                  aria-hidden="true"
+                />
+              )}
+
+              <Icon
+                className={cn(
+                  "w-[22px] h-[22px] relative z-10 transition-transform duration-150",
+                  isActive ? "scale-110" : ""
+                )}
+              />
+              <span
+                className={cn(
+                  "text-[10px] font-medium leading-none relative z-10",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}

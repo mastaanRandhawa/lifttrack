@@ -10,6 +10,8 @@ import {
   Zap,
   AlertCircle,
   Activity,
+  Play,
+  Trophy,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +35,7 @@ const ACTIVATION_COLORS: Record<string, string> = {
 };
 
 const ACTIVATION_DOT: Record<string, string> = {
-  fresh: "bg-muted-foreground",
+  fresh: "bg-muted-foreground/40",
   light: "bg-green-400",
   moderate: "bg-amber-400",
   heavy: "bg-red-400",
@@ -51,182 +53,245 @@ export default function DashboardPage() {
   const { user } = useUserStore();
   const displayName = user?.displayName ?? "Lifter";
   const lastSession = SESSION_HISTORY[0];
-  const todayTemplate = WORKOUT_TEMPLATES.find((t) => t.splitType === "ppl");
   const suggestedTemplate = WORKOUT_TEMPLATES.find((t) => t.id === "ppl-6day");
 
-  const recoveredMuscles = MOCK_MUSCLE_ACTIVATIONS.filter((m) => m.level === "fresh" || m.level === "light");
-  const recoveringMuscles = MOCK_MUSCLE_ACTIVATIONS.filter((m) => m.level === "recovering" || m.level === "heavy");
+  const recoveredMuscles = MOCK_MUSCLE_ACTIVATIONS.filter(
+    (m) => m.level === "fresh" || m.level === "light"
+  );
+  const recoveringMuscles = MOCK_MUSCLE_ACTIVATIONS.filter(
+    (m) => m.level === "recovering" || m.level === "heavy"
+  );
 
   const topRecommendation = TRAINING_RECOMMENDATIONS[0];
 
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <p className="text-muted-foreground text-sm">{greeting},</p>
-        <h1 className="font-heading text-3xl font-bold text-foreground mt-1">
-          {displayName} <span className="text-muted-foreground font-normal">👋</span>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8">
+      {/* ── Header ───────────────────────────────────────────────────── */}
+      <div className="mb-6">
+        <p className="text-muted-foreground text-sm">{greeting}</p>
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold text-foreground mt-0.5">
+          {displayName}
         </h1>
-        <p className="text-muted-foreground mt-1">Here&apos;s your training overview for today.</p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* ── Hero CTA — above the fold, first interaction ─────────────── */}
+      {suggestedTemplate && (
+        <div className="mb-6 p-5 rounded-[18px] bg-gradient-to-br from-primary/15 via-primary/8 to-transparent border border-primary/25 relative overflow-hidden">
+          {/* Subtle glow */}
+          <div
+            className="absolute right-0 top-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none"
+            aria-hidden="true"
+          />
+
+          {/* Recommendation chip */}
+          {topRecommendation && (
+            <div
+              className={cn(
+                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium mb-3 border",
+                topRecommendation.type === "recover"
+                  ? "bg-primary/10 text-primary border-primary/25"
+                  : "bg-green-500/10 text-green-400 border-green-500/25"
+              )}
+            >
+              {topRecommendation.type === "recover" ? (
+                <AlertCircle className="w-3 h-3 shrink-0" />
+              ) : (
+                <CheckCircle2 className="w-3 h-3 shrink-0" />
+              )}
+              {topRecommendation.message}
+            </div>
+          )}
+
+          <h2 className="font-heading text-xl font-bold text-foreground mb-0.5 relative z-10">
+            Next Up: Push B
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4 relative z-10">
+            {suggestedTemplate.estimatedMinutes} min &middot;{" "}
+            {suggestedTemplate.days[0].exercises.length} exercises &middot;{" "}
+            {suggestedTemplate.name}
+          </p>
+
+          <Link href={`/workout/${suggestedTemplate.id}`} className="relative z-10">
+            <Button size="lg" className="gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto">
+              <Play className="w-4 h-4 fill-current" />
+              Start Workout
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* ── Stats row ─────────────────────────────────────────────────── */}
+      {/* On mobile: 2-col; desktop: 4-col. Only show two on mobile (streak + this week — most actionable) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <StatCard
-          label="Current Streak"
-          value={`${user?.currentStreak ?? 8} days`}
-          icon={<Flame className="w-5 h-5 text-amber-400" />}
+          label="Streak"
+          value={`${user?.currentStreak ?? 8}`}
+          unit="days"
+          icon={<Flame className="w-4 h-4 text-amber-400" />}
           highlight
         />
         <StatCard
-          label="Total Sessions"
-          value={`${user?.totalSessions ?? 142}`}
-          icon={<Dumbbell className="w-5 h-5 text-primary" />}
-        />
-        <StatCard
           label="This Week"
-          value="3 sessions"
-          icon={<Activity className="w-5 h-5 text-green-400" />}
+          value="3"
+          unit="sessions"
+          icon={<Activity className="w-4 h-4 text-green-400" />}
         />
         <StatCard
-          label="Total Volume"
-          value="245,680 kg"
-          icon={<TrendingUp className="w-5 h-5 text-violet" />}
+          label="Sessions"
+          value={`${user?.totalSessions ?? 142}`}
+          unit="total"
+          icon={<Dumbbell className="w-4 h-4 text-primary" />}
+          className="hidden lg:block"
+        />
+        <StatCard
+          label="Volume"
+          value="245K"
+          unit="kg total"
+          icon={<TrendingUp className="w-4 h-4 text-muted-foreground" />}
+          className="hidden lg:block"
         />
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Main column */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Today's recommendation */}
-          <div className="p-5 rounded-[18px] bg-card border border-border">
-            <div className="flex items-center gap-2 mb-4">
-              <Zap className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Today&apos;s Recommendation</span>
-            </div>
+      {/* ── Main grid ─────────────────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-5">
+        {/* ── Left / main ─────────────────────────────────────────────── */}
+        <div className="lg:col-span-2 space-y-5">
 
-            {topRecommendation && (
-              <div className={cn(
-                "p-4 rounded-xl border mb-4",
-                topRecommendation.type === "recover" ? "bg-primary/8 border-primary/20" : "bg-green-500/8 border-green-500/20"
-              )}>
-                <div className="flex items-start gap-3">
-                  {topRecommendation.type === "recover" ? (
-                    <AlertCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                  ) : (
-                    <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0 mt-0.5" />
-                  )}
-                  <p className="text-sm text-foreground">{topRecommendation.message}</p>
-                </div>
-              </div>
-            )}
-
-            {suggestedTemplate && (
-              <div className="flex items-center justify-between p-4 rounded-xl bg-surface border border-border">
-                <div>
-                  <p className="font-semibold text-foreground">Next Up: Push B</p>
-                  <p className="text-sm text-muted-foreground">{suggestedTemplate.estimatedMinutes} min · {suggestedTemplate.days[0].exercises.length} exercises</p>
-                </div>
-                <Link href={`/workout/${suggestedTemplate.id}`}>
-                  <Button size="sm" className="gap-1.5">
-                    Start <ChevronRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
-
-          {/* Last Session */}
-          <div className="p-5 rounded-[18px] bg-card border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Dumbbell className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Last Session</span>
-              </div>
-              <Link href="/progress" className="text-sm text-primary hover:underline flex items-center gap-1">
+          {/* Last session */}
+          <section aria-label="Last session" className="p-5 rounded-[18px] bg-card border border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Dumbbell className="w-3.5 h-3.5" />
+                Last Session
+              </h2>
+              <Link
+                href="/progress"
+                className="text-sm text-primary hover:underline flex items-center gap-0.5"
+                aria-label="View all sessions"
+              >
                 View all <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {lastSession && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-foreground">{lastSession.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formatDate(lastSession.startedAt)} · {lastSession.durationMinutes}min · {(lastSession.totalVolume ?? 0).toLocaleString()} kg
+            {lastSession ? (
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground truncate">{lastSession.name}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {formatDate(lastSession.startedAt)} &middot; {lastSession.durationMinutes}
+                    min &middot;{" "}
+                    {(lastSession.totalVolume ?? 0).toLocaleString()} kg
                   </p>
                 </div>
-                <Badge variant="secondary">
-                  {lastSession.exercises.reduce((acc, ex) => acc + ex.sets.filter((s) => !s.isWarmup).length, 0)} sets
+                <Badge variant="secondary" className="shrink-0">
+                  {lastSession.exercises.reduce(
+                    (acc, ex) => acc + ex.sets.filter((s) => !s.isWarmup).length,
+                    0
+                  )}{" "}
+                  sets
                 </Badge>
               </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No sessions yet — start your first workout above.</p>
             )}
-          </div>
+          </section>
 
           {/* PRs */}
-          <div className="p-5 rounded-[18px] bg-card border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent PRs</span>
-              </div>
-              <Link href="/progress" className="text-sm text-primary hover:underline flex items-center gap-1">
+          <section aria-label="Personal records" className="p-5 rounded-[18px] bg-card border border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5" />
+                Recent PRs
+              </h2>
+              <Link
+                href="/progress"
+                className="text-sm text-primary hover:underline flex items-center gap-0.5"
+              >
                 Progress <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
-            <div className="space-y-3">
-              {PERSONAL_RECORDS.slice(0, 3).map((pr) => (
-                <div key={pr.exerciseId} className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{pr.exerciseName}</p>
-                    <p className="text-xs text-muted-foreground">{formatDate(pr.achievedAt)}</p>
+
+            {PERSONAL_RECORDS.length > 0 ? (
+              <div className="divide-y divide-border">
+                {PERSONAL_RECORDS.slice(0, 3).map((pr) => (
+                  <div
+                    key={pr.exerciseId}
+                    className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0"
+                  >
+                    <div className="min-w-0 pr-3">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {pr.exerciseName}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{formatDate(pr.achievedAt)}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-semibold text-foreground">
+                        {pr.weight}kg &times; {pr.reps}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        e1RM: {pr.estimatedOneRepMax}kg
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">{pr.weight}kg × {pr.reps}</p>
-                    <p className="text-xs text-muted-foreground">e1RM: {pr.estimatedOneRepMax}kg</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No PRs recorded yet.</p>
+            )}
+          </section>
         </div>
 
-        {/* Sidebar column */}
-        <div className="space-y-6">
-          {/* Recovery panel */}
-          <div className="p-5 rounded-[18px] bg-card border border-border">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Muscle Status</span>
-            </div>
+        {/* ── Right / sidebar ──────────────────────────────────────────── */}
+        <div className="space-y-5">
+          {/* Recovery / muscle status */}
+          <section aria-label="Muscle status" className="p-5 rounded-[18px] bg-card border border-border">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 mb-4">
+              <Activity className="w-3.5 h-3.5" />
+              Muscle Status
+            </h2>
 
-            <div className="space-y-2 mb-4">
-              <p className="text-xs text-muted-foreground font-medium">Ready to train</p>
-              {recoveredMuscles.slice(0, 4).map((m) => (
-                <MuscleRow key={m.muscleId} muscle={m} />
-              ))}
-            </div>
+            {recoveredMuscles.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs text-muted-foreground font-medium mb-2">
+                  Ready to train ({recoveredMuscles.length})
+                </p>
+                <div className="space-y-2">
+                  {recoveredMuscles.slice(0, 4).map((m) => (
+                    <MuscleRow key={m.muscleId} muscle={m} />
+                  ))}
+                </div>
+              </div>
+            )}
 
-            <div className="border-t border-border pt-3 space-y-2">
-              <p className="text-xs text-muted-foreground font-medium">Still recovering</p>
-              {recoveringMuscles.slice(0, 3).map((m) => (
-                <MuscleRow key={m.muscleId} muscle={m} />
-              ))}
-            </div>
+            {recoveringMuscles.length > 0 && (
+              <div className="border-t border-border pt-3">
+                <p className="text-xs text-muted-foreground font-medium mb-2">
+                  Still recovering ({recoveringMuscles.length})
+                </p>
+                <div className="space-y-2">
+                  {recoveringMuscles.slice(0, 3).map((m) => (
+                    <MuscleRow key={m.muscleId} muscle={m} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <Link href="/body-map" className="block mt-4">
               <Button variant="outline" size="sm" className="w-full gap-2">
-                View Body Map <ChevronRight className="w-3.5 h-3.5" />
+                Full Body Map <ChevronRight className="w-3.5 h-3.5" />
               </Button>
             </Link>
-          </div>
+          </section>
 
-          {/* Quick actions */}
-          <div className="p-5 rounded-[18px] bg-card border border-border">
-            <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">Quick Actions</p>
+          {/* Quick actions — desktop only, redundant on mobile where nav covers this */}
+          <section aria-label="Quick actions" className="hidden lg:block p-5 rounded-[18px] bg-card border border-border">
+            <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+              Quick Actions
+            </p>
             <div className="space-y-2">
               <Link href="/workout">
                 <Button variant="outline" className="w-full justify-start gap-3">
@@ -247,34 +312,49 @@ export default function DashboardPage() {
                 </Button>
               </Link>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </div>
   );
 }
 
+// ── Sub-components ─────────────────────────────────────────────────────────
+
 function StatCard({
   label,
   value,
+  unit,
   icon,
   highlight = false,
+  className,
 }: {
   label: string;
   value: string;
+  unit: string;
   icon: React.ReactNode;
   highlight?: boolean;
+  className?: string;
 }) {
   return (
-    <div className={cn(
-      "p-4 rounded-[18px] border",
-      highlight ? "bg-primary/8 border-primary/25" : "bg-card border-border"
-    )}>
-      <div className="flex items-center justify-between mb-3">
+    <div
+      className={cn(
+        "p-4 rounded-[18px] border",
+        highlight ? "bg-primary/8 border-primary/25" : "bg-card border-border",
+        className
+      )}
+    >
+      <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-muted-foreground font-medium">{label}</span>
         {icon}
       </div>
-      <p className="font-heading text-xl font-bold text-foreground">{value}</p>
+      {/* Large value + small unit — visual hierarchy */}
+      <div className="flex items-baseline gap-1">
+        <p className="font-heading text-2xl font-bold text-foreground leading-none">
+          {value}
+        </p>
+        <span className="text-xs text-muted-foreground">{unit}</span>
+      </div>
     </div>
   );
 }
@@ -287,11 +367,22 @@ function MuscleRow({ muscle }: { muscle: MuscleActivation }) {
 
   return (
     <div className="flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <span className={cn("w-2 h-2 rounded-full shrink-0", ACTIVATION_DOT[muscle.level])} />
-        <span className="text-sm text-foreground">{muscleName}</span>
+      <div className="flex items-center gap-2 min-w-0">
+        <span
+          className={cn(
+            "w-2 h-2 rounded-full shrink-0",
+            ACTIVATION_DOT[muscle.level]
+          )}
+          aria-hidden="true"
+        />
+        <span className="text-sm text-foreground truncate">{muscleName}</span>
       </div>
-      <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", ACTIVATION_COLORS[muscle.level])}>
+      <span
+        className={cn(
+          "text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0",
+          ACTIVATION_COLORS[muscle.level]
+        )}
+      >
         {muscle.level}
       </span>
     </div>
